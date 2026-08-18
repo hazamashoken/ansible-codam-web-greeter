@@ -49,44 +49,15 @@
     group: root
     mode: '0644'
 
-- name: Ensure lightdm.conf ends with newline
+- name: Configure LightDM for codam-web-greeter
   tags: [codam.webgreeter, codam.webgreeter.setup]
   become: true
-  shell:
-    cmd: "sed -i '$a\\' /etc/lightdm/lightdm.conf"
-
-- name: Configure lightdm
-  tags: [codam.webgreeter, codam.webgreeter.setup]
-  become: true
-  lineinfile:
-    path: /etc/lightdm/lightdm.conf
-    line: "{{ item }}"
-    insertafter: "[SeatDefaults]"
-    regexp: '^#?{{ item.split("=")[0] }}=' # regexp with optional comment start and up to the = sign to replace the value
-    state: present
-  with_items:
-    - 'greeter-session=nody-greeter'
-    - 'user-session=ubuntu' # because codam-web-greeter does not support selecting a user session
-    - 'allow-guest=false'
-    - 'allow-user-switching=true'
-    - 'greeter-hide-users=true'
-    - 'greeter-show-manual-login=true'
-
-- name: Delete display-setup hook script
-  tags: [never, codam.webgreeter.revertdisplaysetup] # this task is only needed when you want to revert the display-setup hook changes made by version v1.2.0 - v1.2.1
-  become: true
-  file:
-    path: /usr/share/42/scripts/hook-display-setup.sh
-    state: absent
-
-- name: Disable display-setup hook in lightdm
-  tags: [never, codam.webgreeter.revertdisplaysetup] # this task is only needed when you want to revert the display-setup hook changes made by version v1.2.0 - v1.2.1
-  become: true
-  lineinfile:
-    path: /etc/lightdm/lightdm.conf
-    state: absent
-    insertbefore: 'session-setup-script='
-    regexp: '^display-setup-script='
+  template:
+    src: etc/lightdm/lightdm.conf.d/99-codam-web-greeter.conf.j2
+    dest: /etc/lightdm/lightdm.conf.d/99-codam-web-greeter.conf
+    owner: root
+    group: root
+    mode: '0644'
 
 - name: Copy greeter-setup hook script
   tags: [codam.webgreeter, codam.webgreeter.setup, hooks.d]
@@ -97,16 +68,6 @@
     owner: root
     group: root
     mode: '0500'
-
-- name: Enable greeter-setup hook in lightdm
-  tags: [codam.webgreeter, codam.webgreeter.setup, hooks.d]
-  become: true
-  lineinfile:
-    path: /etc/lightdm/lightdm.conf
-    line: greeter-setup-script=/usr/share/42/scripts/hook-greeter-setup.sh
-    insertbefore: 'session-setup-script='
-    state: present
-    regexp: '^#?greeter-setup-script='
 
 - name: Copy login hook script to prevent user sessions on X-server :1
   tags: [codam.webgreeter, codam.webgreeter.setup, hooks.d]
