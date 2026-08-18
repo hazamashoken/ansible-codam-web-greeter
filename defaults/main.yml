@@ -4,7 +4,7 @@ nody_greeter_version: "1.6.2"
 # Specify where to download the codam-web-greeter from and which tag/release to use.
 # Fork the codam-web-greeter repository and point this URL to your fork if you need to use a custom version.
 codam_web_greeter_git_repo: "https://github.com/codam-coding-college/codam-web-greeter"
-codam_web_greeter_version: "v1.2.0"
+codam_web_greeter_version: "v1.3.6"
 codam_web_greeter_theme: "dark" # dark or light
 codam_web_greeter_boxed_mode: "default" # default or boxed (boxed adds a semi-transparent background to the login/unlock forms for better readability)
 
@@ -21,3 +21,21 @@ login_wallpaper_path: "/usr/share/42/login-screen.jpg"
 # Specify whether or not to add support for ddcci-backlight control on external monitors
 # Requires ddcci-dkms to be installed, which is not supported by iMacs with T2 chips
 ddcci_backlight_support: true
+
+# Custom contents for the idle logout hook script
+codam_web_greeter_idle_logout_hook_contents: |
+  #!/bin/bash
+  #
+  # This script is executed after a user has been logged out due to inactivity by the codam-web-greeter-idler.sh script.
+  # It receives the following arguments:
+  # $1: username of the user that was logged out
+  # $2: idle time in milliseconds
+  # $3: time since screen was locked in milliseconds
+  # $4: max idle time in milliseconds
+  #
+  # You can use this script to perform custom actions, such as logging, notifications, coalition system integration, etc.
+  # It can be easily customized using the Ansible codam.webgreeter role.
+  #
+  # Example: Log the logout event to a file
+  # LOGFILE="/var/log/codam-web-greeter-idle-logout.log"
+  # echo "$(date): User '$1' was logged out due to inactivity (idletime: $2 ms, time_since_lock: $3 ms, max_idle_time: $4 ms)" >> "$LOGFILE"

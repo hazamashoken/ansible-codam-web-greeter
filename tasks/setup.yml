@@ -49,6 +49,12 @@
     group: root
     mode: '0644'
 
+- name: Ensure lightdm.conf ends with newline
+  tags: [codam.webgreeter, codam.webgreeter.setup]
+  become: true
+  shell:
+    cmd: "sed -i '$a\\' /etc/lightdm/lightdm.conf"
+
 - name: Configure lightdm
   tags: [codam.webgreeter, codam.webgreeter.setup]
   become: true
@@ -102,6 +108,16 @@
     state: present
     regexp: '^#?greeter-setup-script='
 
+- name: Copy login hook script to prevent user sessions on X-server :1
+  tags: [codam.webgreeter, codam.webgreeter.setup, hooks.d]
+  become: true
+  copy:
+    src: usr/share/42/scripts/hooks.d/login.d/10-prevent-xserver-1.sh
+    dest: /usr/share/42/scripts/hooks.d/login.d/10-prevent-xserver-1.sh
+    owner: root
+    group: root
+    mode: '0500'
+
 - name: Add user uncaching to logout hooks
   tags: [codam.webgreeter, codam.webgreeter.setup, hooks.d]
   become: true
@@ -141,12 +157,30 @@
         exit 0
       fi
 
-- name: Allow rebooting from greeter
+- name: Customize post-idle-logout hook script
+  tags: [codam.webgreeter, codam.webgreeter.setup, hooks.d]
+  become: true
+  copy:
+    content: "{{ codam_web_greeter_idle_logout_hook_contents }}"
+    dest: /usr/share/codam/codam-web-greeter-idler-hook.sh
+    owner: root
+    group: root
+    mode: '0500' # Do not allow others to read this script, it may contain sensitive info
+
+- name: Check if freedesktop login1 policy exists on organizational level # 42.common v2.1.13 and before
+  tags: [codam.webgreeter, codam.webgreeter.setup]
+  become: true
+  ansible.builtin.stat:
+    path: /etc/polkit-1/localauthority/20-org.d/org.freedesktop.login1.pkla
+  register: polkit_login1_org_stat
+
+- name: Allow rebooting from greeter on organizational level
   tags: [codam.webgreeter, codam.webgreeter.setup]
   become: true
   blockinfile:
     path: /etc/polkit-1/localauthority/20-org.d/org.freedesktop.login1.pkla
-    insertafter: EOF
+    insertafter: BOF # beginning of file: overrule existing entries
+    create: false
     block: |
       [42 Enable reboot by default for lightdm user]
       Identity=unix-user:lightdm
@@ -154,6 +188,30 @@
       ResultAny=yes
       ResultInactive=yes
       ResultActive=yes
+  when: polkit_login1_org_stat.stat.exists
+
+- name: Check if freedesktop login1 policy exists on local level # 42.common >v2.1.13
+  tags: [codam.webgreeter, codam.webgreeter.setup]
+  become: true
+  ansible.builtin.stat:
+    path: /etc/polkit-1/localauthority/50-local.d/10-org.freedesktop.login1.pkla
+  register: polkit_login1_local_stat
+
+- name: Allow rebooting from greeter on local level
+  tags: [codam.webgreeter, codam.webgreeter.setup]
+  become: true
+  blockinfile:
+    path: /etc/polkit-1/localauthority/50-local.d/10-org.freedesktop.login1.pkla
+    insertafter: BOF # beginning of file: overrule existing entries
+    create: false
+    block: |
+      [Allow lightdm user to reboot]
+      Identity=unix-user:lightdm
+      Action=org.freedesktop.login1.reboot;org.freedesktop.login1.reboot-multiple-sessions;org.freedesktop.login1.reboot-ignore-inhibit;
+      ResultAny=yes
+      ResultInactive=yes
+      ResultActive=yes
+  when: polkit_login1_local_stat.stat.exists
 
 - name: Ignore power, suspend and hibernate keys
   tags: [codam.webgreeter, codam.webgreeter.setup]

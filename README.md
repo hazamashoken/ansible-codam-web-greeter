@@ -4,12 +4,14 @@ This Ansible playbook installs [codam-web-greeter](https://github.com/codam-codi
 ---
 
 ## How to use
+Before starting, make sure npm is installed on your cluster computers. This is required for the build process of codam-web-greeter.
+
 Add the following to the roles in your `requirements.yml` file in your `ansiblecluster` repository:
 ```yaml
 roles:
   - name: codam.webgreeter
     src: git+https://github.com/codam-coding-college/ansible-codam-web-greeter.git
-    version: v1.5.1
+    version: v1.5.3
 ```
 It is recommended to change the version specified to the latest one from the [Releases](https://github.com/codam-coding-college/ansible-codam-web-greeter/releases) page. Please note that this version is specific to this playbook and does not necessarily match the version of the codam-web-greeter itself.
 
@@ -22,7 +24,7 @@ Modify the [variables](#variables) using the `vars/all.yml` file in your `ansibl
 
 > ⚠️ If using iMacs with T2 chips, set the `ddcci_backlight_support` variable to `false` to avoid issues with the ddcci-backlight kernel module.
 
-Add the role to your `site.yml` playbook as the last role executed (do not define tags here, this is unneccessary and is a mistake 42 made for all the other roles):
+Add the role to your `site.yml` playbook as the last role to be executed:
 ```yaml
 roles:
   ...
@@ -47,7 +49,7 @@ It is also possible to specify a default user image in case the user's `~/.face`
 |----------|---------|-------------|
 | `nody_greeter_version` | The version of the nody-greeter to install from GitHub. | `1.6.2` |
 | `codam_web_greeter_git_repo` | The repository to download codam-web-greeter from. | `https://github.com/codam-coding-college/codam-web-greeter` |
-| `codam_web_greeter_version` | The version of codam-web-greeter to download (use a tag or a branch name from the git repo). | `v1.2.0` |
+| `codam_web_greeter_version` | The version of codam-web-greeter to download (use a tag or a branch name from the git repo). | `v1.3.6` |
 | `codam_web_greeter_theme` | The theme to use for the greeter. Can be `dark` or `light`. | `dark` |
 | `codam_web_greeter_boxed_mode` | Boxed mode adds a semi-transparent background to the login/unlock forms for better readability. Can be `default` (no background) or `boxed`. | `default` |
 | `codam_web_greeter_data_server_url` | The URL to the data server to download the greeter data from. Hostname is appended to the url, so make sure it ends with a slash. | `https://clusterdata.codam.nl/api/config/` |
@@ -55,3 +57,4 @@ It is also possible to specify a default user image in case the user's `~/.face`
 | `dbus_cache_group_check_group`| The group to check for. | `student` |
 | `login_wallpaper_path` | The path to the login wallpaper to set. | `/usr/share/42/login-screen.jpg` |
 | `ddcci_backlight_support` | Whether to enable support for DDC/CI to allow controlling the brightness of external monitors. Should be set to `false` if you're using iMacs with T2 chips or any other *ddcci-dkms* unsupported kernel. | `true` |
+| `codam_web_greeter_idle_logout_hook_contents` | The contents of the custom hook script that is run after a user is logged out due to leaving a computer idle. Look at [defaults/main.yml](defaults/main.yml) for an example. | [View example](defaults/main.yml) |
